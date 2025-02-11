@@ -6,3 +6,5 @@ paddleocr
 pdf2image
 Pillow
 numpy 
+mistralai
+python-dotenv

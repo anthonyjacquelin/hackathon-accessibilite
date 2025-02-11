@@ -1,6 +1,6 @@
 # Document Understanding API
 
-This FastAPI application processes PDFs, text files, and markdown documents using Mistral's AI models to understand document structure and content.
+This FastAPI application processes PDFs and converts them to markdown format using Mistral's vision model.
 
 ## Features
 
@@ -15,6 +15,7 @@ This FastAPI application processes PDFs, text files, and markdown documents usin
 
 - Python 3.8+
 - Mistral API key
+- Poppler (for PDF processing)
 
 ## Setup
 
@@ -35,7 +36,12 @@ source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Create a `.env` file in the root directory and add your Mistral API key:
+4. Install Poppler:
+   - Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
+   - macOS: `brew install poppler`
+   - Ubuntu/Debian: `sudo apt-get install poppler-utils`
+
+5. Create a `.env` file in the root directory and add your Mistral API key:
 ```
 MISTRAL_API_KEY=your_api_key_here
 ```
@@ -51,33 +57,15 @@ The API will be available at `http://localhost:8000`
 
 ## API Endpoints
 
-### 1. Process PDF
-- **URL**: `/process/pdf`
+### 1. Transcribe PDF
+- **URL**: `/transcribe/pdf`
 - **Method**: POST
 - **Content-Type**: multipart/form-data
 - **Parameter**: file (PDF file)
-
-### 2. Process Text
-- **URL**: `/process/text`
-- **Method**: POST
-- **Content-Type**: multipart/form-data
-- **Parameter**: file (Text file)
-
-### 3. Process Markdown
-- **URL**: `/process/markdown`
-- **Method**: POST
-- **Content-Type**: multipart/form-data
-- **Parameter**: file (Markdown file)
-
-## Response Format
-
-All endpoints return a JSON response with the following structure:
+- **Response**: JSON object containing markdown content
 ```json
 {
-    "content": "The extracted text content",
-    "structure": {
-        // Document structure analysis
-    }
+    "markdown_content": "The transcribed markdown content"
 }
 ```
 
@@ -85,4 +73,4 @@ All endpoints return a JSON response with the following structure:
 
 Once the server is running, you can access the interactive API documentation at:
 - Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc` 
+- ReDoc: `http://localhost:8000/redoc`
