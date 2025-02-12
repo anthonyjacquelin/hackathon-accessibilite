@@ -14,7 +14,6 @@ import uvicorn
 
 from PIL import Image
 import pytesseract
-import fitz  # PyMuPDF
 
 load_dotenv()
 
@@ -116,14 +115,6 @@ def split_image_into_sections(image: Image.Image, max_height: int = 2000) -> lis
         image.crop((0, y, width, min(y + max_height, height)))
         for y in range(0, height, max_height)
     ]
-
-def extract_text_with_pymupdf(pdf_path: str) -> str:
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page_num in range(doc.page_count):
-        page = doc.load_page(page_num)
-        text += page.get_text()
-    return text
 
 async def process_section(section: Image.Image, extracted_text: str) -> str:
     """Process a section of the document using Pixtral vision model"""
