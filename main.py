@@ -12,6 +12,9 @@ import asyncio
 import re
 import uvicorn
 
+from PIL import Image
+import pytesseract
+
 load_dotenv()
 
 app = FastAPI(
@@ -113,7 +116,7 @@ def split_image_into_sections(image: Image.Image, max_height: int = 2000) -> lis
         for y in range(0, height, max_height)
     ]
 
-async def process_section(section: Image.Image) -> str:
+async def process_section(section: Image.Image, extracted_text: str) -> str:
     """Process a section of the document using Pixtral vision model"""
     img_base64 = image_to_base64(section)
     
@@ -124,7 +127,7 @@ async def process_section(section: Image.Image) -> str:
                 {
                     "type": "text",
                     "text": """You are a document transcription assistant. Your task is to:
-                    1. Carefully read and transcribe all text from the image
+                    1. Carefully read and transcribe all text from the image. Use the reference extracted text as the foundation. Only use the content in the image that has not been recognized or was unclear in the extracted text provided.
                     2. Preserve the document structure using markdown formatting
                     3. Use appropriate markdown syntax for:
                        - Headers (# for main headers, ## for subheaders, etc.)
@@ -139,7 +142,6 @@ async def process_section(section: Image.Image) -> str:
                        - Ensure proper indentation for nested lists
                        - Never use language specifiers in code blocks
                        - Never wrap the entire content in code blocks
-                       - Use actual newlines instead of \n characters
                        - Add two spaces at the end of lines that need line breaks
                     5. Maintain the visual hierarchy and layout of the original document
                     6. Return ONLY the raw markdown content without any formatting markers or metadata
@@ -157,6 +159,10 @@ async def process_section(section: Image.Image) -> str:
                 {
                     "type": "image_url",
                     "image_url": f"data:image/jpeg;base64,{img_base64}"
+                },
+                {
+                    "type": "text",
+                    "text": extracted_text  # Ajoute ici le texte extrait par Tesseract
                 }
             ]
         }
@@ -186,9 +192,12 @@ async def transcribe_pdf(file: UploadFile):
         
         for page_num, image in enumerate(pdf_images, 1):
             sections = split_image_into_sections(image)
+
+            # Extract text using Tesseract OCR
+            extracted_text = pytesseract.image_to_string(image)
             
             # Process all sections in parallel
-            section_tasks = [process_section(section) for section in sections]
+            section_tasks = [process_section(section, extracted_text) for section in sections]
             sections_md = await asyncio.gather(*section_tasks)
             
             page_content = f"## Page {page_num}\n\n" + "\n\n".join(
